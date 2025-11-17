@@ -28,11 +28,37 @@ fi
 
 echo -e "${BLUE}=== SSL Certificate Management for $DOMAIN ===${NC}"
 
+# Function to enable default HTTP mode
+enable_default_mode() {
+    echo -e "${YELLOW}Switching to default HTTP mode...${NC}"
+    
+    # Disable challenge config and HTTPS config
+    if [ -f "nginx/conf.d/ssl-challenge.conf" ]; then
+        mv "nginx/conf.d/ssl-challenge.conf" "nginx/conf.d/ssl-challenge.conf.disabled" 2>/dev/null || true
+    fi
+    
+    if [ -f "nginx/conf.d/https-proxy.conf" ]; then
+        mv "nginx/conf.d/https-proxy.conf" "nginx/conf.d/https-proxy.conf.disabled" 2>/dev/null || true
+    fi
+    
+    # Restore default config
+    if [ -f "nginx/conf.d/default.conf.disabled" ]; then
+        mv "nginx/conf.d/default.conf.disabled" "nginx/conf.d/default.conf"
+    fi
+    
+    echo -e "${GREEN}Default HTTP mode enabled. Restarting nginx...${NC}"
+    docker-compose restart nginx
+}
+
 # Function to enable challenge mode (HTTP only)
 enable_challenge_mode() {
     echo -e "${YELLOW}Switching to SSL challenge mode...${NC}"
     
-    # Disable HTTPS config and enable challenge config
+    # Disable default config and HTTPS config
+    if [ -f "nginx/conf.d/default.conf" ]; then
+        mv "nginx/conf.d/default.conf" "nginx/conf.d/default.conf.disabled" 2>/dev/null || true
+    fi
+    
     if [ -f "nginx/conf.d/https-proxy.conf" ]; then
         mv "nginx/conf.d/https-proxy.conf" "nginx/conf.d/https-proxy.conf.disabled" 2>/dev/null || true
     fi
@@ -63,7 +89,11 @@ enable_ssl_mode() {
         exit 1
     fi
     
-    # Disable challenge config and enable HTTPS config
+    # Disable default config and challenge config, enable HTTPS config
+    if [ -f "nginx/conf.d/default.conf" ]; then
+        mv "nginx/conf.d/default.conf" "nginx/conf.d/default.conf.disabled" 2>/dev/null || true
+    fi
+    
     if [ -f "nginx/conf.d/ssl-challenge.conf" ]; then
         mv "nginx/conf.d/ssl-challenge.conf" "nginx/conf.d/ssl-challenge.conf.disabled"
     fi
@@ -158,6 +188,10 @@ show_status() {
     echo "SSL Mode: ${SSL_MODE:-challenge}"
     
     echo -e "\n${BLUE}=== Active Nginx Config ===${NC}"
+    if [ -f "nginx/conf.d/default.conf" ]; then
+        echo "✓ Default HTTP mode (current)"
+    fi
+    
     if [ -f "nginx/conf.d/ssl-challenge.conf" ]; then
         echo "✓ Challenge mode (HTTP + ACME)"
     fi
@@ -187,11 +221,14 @@ case "$1" in
     ssl)
         enable_ssl_mode
         ;;
+    default)
+        enable_default_mode
+        ;;
     status)
         show_status
         ;;
     *)
-        echo "Usage: $0 {obtain|renew|check|challenge|ssl|status}"
+        echo "Usage: $0 {obtain|renew|check|challenge|ssl|default|status}"
         echo ""
         echo "Commands:"
         echo "  obtain     - Obtain new SSL certificate and enable HTTPS"
@@ -199,6 +236,7 @@ case "$1" in
         echo "  check      - Check certificate status and details"
         echo "  challenge  - Switch to challenge mode (HTTP only)"
         echo "  ssl        - Switch to SSL mode (HTTPS)"
+        echo "  default    - Switch to default HTTP mode"
         echo "  status     - Show current configuration status"
         echo ""
         echo "Example workflow:"
