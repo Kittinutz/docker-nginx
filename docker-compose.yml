@@ -10,11 +10,15 @@ services:
     container_name: nginx-proxy
     restart: unless-stopped
     ports:
-      - "80:80" # HTTP port for reverse proxy
+      - "80:80" # HTTP port for reverse proxy and ACME challenges
+      - "443:443" # HTTPS port for SSL traffic
     volumes:
       # Nginx configuration files
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Shared volumes with certbot for SSL certificates
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
     networks:
       - frontend-raise-fund_app-network
     depends_on:
