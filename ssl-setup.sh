@@ -49,7 +49,7 @@ enable_challenge_mode() {
     sed -i '' 's/SSL_MODE=ssl/SSL_MODE=challenge/' .env 2>/dev/null || true
     
     echo -e "${GREEN}Challenge mode enabled. Restarting nginx...${NC}"
-    docker compose restart nginx
+    docker-compose restart nginx
 }
 
 # Function to enable SSL mode (HTTPS)
@@ -80,7 +80,7 @@ enable_ssl_mode() {
     sed -i '' 's/SSL_MODE=challenge/SSL_MODE=ssl/' .env 2>/dev/null || true
     
     echo -e "${GREEN}SSL mode enabled. Restarting nginx...${NC}"
-    docker compose restart nginx
+    docker-compose restart nginx
 }
 
 # Function to obtain SSL certificate
@@ -94,7 +94,7 @@ obtain_certificate() {
     sleep 5
     
     # Obtain certificate
-    docker compose run --rm certbot certonly \
+    docker-compose run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email $EMAIL \
@@ -118,12 +118,12 @@ obtain_certificate() {
 renew_certificate() {
     echo -e "${YELLOW}Renewing SSL certificate...${NC}"
     
-    docker compose run --rm certbot renew
+    docker-compose run --rm certbot renew
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Certificate renewed successfully!${NC}"
         echo -e "${YELLOW}Reloading nginx...${NC}"
-        docker compose exec nginx nginx -s reload
+        docker-compose exec nginx nginx -s reload
     else
         echo -e "${RED}Failed to renew certificate${NC}"
         exit 1
@@ -134,7 +134,7 @@ renew_certificate() {
 check_certificate() {
     echo -e "${YELLOW}Checking certificate status for $DOMAIN...${NC}"
     
-    docker compose run --rm certbot certificates
+    docker-compose run --rm certbot certificates
     
     if [ -f "certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
         echo -e "${GREEN}Certificate files found:${NC}"
@@ -167,7 +167,7 @@ show_status() {
     fi
     
     echo -e "\n${BLUE}=== Docker Services ===${NC}"
-    docker compose ps
+    docker-compose ps
 }
 
 # Main menu
