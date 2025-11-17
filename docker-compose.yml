@@ -1,0 +1,81 @@
+version: "3.8"
+
+# Complete Nginx Reverse Proxy Setup with Next.js and Certbot
+# This setup provides:
+# - Nginx reverse proxy to Next.js application
+# - Automatic SSL certificate management with Let's Encrypt
+# - HTTP to HTTPS redirection
+# - WebSocket support for Next.js HMR
+# - Security headers and modern SSL configuration
+
+services:
+  # Nginx Reverse Proxy Service
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80" # HTTP port for ACME challenges and redirect
+      - "443:443" # HTTPS port for secure traffic
+    volumes:
+      # Nginx configuration files
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Shared volumes with certbot for SSL certificates
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - certbot
+      - nextjs
+    networks:
+      - app-network
+
+  # Certbot Service for SSL Certificate Management
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    restart: unless-stopped
+    volumes:
+      # Shared volumes for ACME challenges and certificate storage
+      - ./certbot/www:/var/www/certbot:rw
+      - ./certbot/conf:/etc/letsencrypt:rw
+    # Automatic certificate renewal every 12 hours
+    command: sh -c "while :; do sleep 12h & wait $${!}; certbot renew; done"
+    networks:
+      - app-network
+
+  # Next.js Application Service
+  nextjs:
+    # Replace with your actual Next.js image or build configuration
+    # image: your-nextjs-app:latest
+    # OR use build context:
+    # build:
+    #   context: ./nextjs-app
+    #   dockerfile: Dockerfile
+    image: node:18-alpine # Placeholder - replace with your Next.js setup
+    container_name: nextjs
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Next.js application port
+    # environment:
+    #   - NODE_ENV=production
+    # volumes:
+    #   - ./nextjs-app:/app
+    # working_dir: /app
+    # command: npm start
+    networks:
+      - app-network
+    # Uncomment and configure based on your Next.js app requirements
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+    # Optional: Connect to external network if needed
+    # external: true
+    # name: frontend-raise-fund_app-network
+# Note: Volumes are managed through bind mounts for easier certificate management

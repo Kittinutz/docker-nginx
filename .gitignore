@@ -1,0 +1,27 @@
+# Environment files
+.env
+
+# SSL certificates and private keys
+certbot/conf/
+!certbot/conf/.gitkeep
+
+# Nginx logs
+nginx/logs/
+!nginx/logs/.gitkeep
+
+# Temporary files
+*.tmp
+*.log
+
+# Docker volumes data
+certbot/www/.well-known/
+!certbot/www/.gitkeep
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
