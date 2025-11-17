@@ -10,7 +10,7 @@ services:
     container_name: nginx-proxy
     restart: unless-stopped
     ports:
-      - "80:80" # HTTP port for reverse proxy and ACME challenges
+      - "80:80" # HTTP port for redirect
       - "443:443" # HTTPS port for SSL traffic
     volumes:
       # Nginx configuration files
