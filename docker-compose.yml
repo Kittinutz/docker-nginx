@@ -24,7 +24,7 @@ services:
     depends_on:
       - certbot
 
-  # Certbot Service for potential SSL certificate management
+  # Certbot Service for SSL certificate management
   certbot:
     image: certbot/certbot:latest
     container_name: certbot-proxy
@@ -35,8 +35,7 @@ services:
       - ./certbot/conf:/etc/letsencrypt:rw
     networks:
       - frontend-raise-fund_app-network
-    # Keep container running without automatic renewal for now
-    command: sh -c "tail -f /dev/null"
+    # No command specified - allows certbot to run normally when called
 
 networks:
   # Connect to external network where Next.js is running
