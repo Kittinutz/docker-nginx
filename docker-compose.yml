@@ -12,6 +12,7 @@ services:
     ports:
       - "80:80" # HTTP port for redirect
       - "443:443" # HTTPS port for SSL traffic
+      - "8545:8545" # HTTPS port for blockchain RPC
     volumes:
       # Nginx configuration files
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
