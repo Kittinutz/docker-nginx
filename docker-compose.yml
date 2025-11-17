@@ -1,52 +1,40 @@
 version: "3.8"
 
-# Complete Nginx Reverse Proxy Setup with Next.js and Certbot
-# This setup provides:
-# - Nginx reverse proxy to Next.js application
-# - Automatic SSL certificate management with Let's Encrypt
-# - HTTP to HTTPS redirection
-# - WebSocket support for Next.js HMR
-# - Security headers and modern SSL configuration
+# Nginx Reverse Proxy connecting to external Next.js service
+# Connects to existing Next.js container running on frontend-raise-fund_app-network
 
 services:
   # Nginx Reverse Proxy Service
   nginx:
     image: nginx:alpine
-    container_name: nginx
+    container_name: nginx-proxy
     restart: unless-stopped
     ports:
-      - "80:80" # HTTP port for ACME challenges and redirect
-      - "443:443" # HTTPS port for secure traffic
+      - "80:80" # HTTP port for reverse proxy
     volumes:
       # Nginx configuration files
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # Shared volumes with certbot for SSL certificates
-      - ./certbot/www:/var/www/certbot:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
+    networks:
+      - frontend-raise-fund_app-network
     depends_on:
       - certbot
-    networks:
-      - app-network
 
-  # Certbot Service for SSL Certificate Management
+  # Certbot Service for potential SSL certificate management
   certbot:
     image: certbot/certbot:latest
-    container_name: certbot
+    container_name: certbot-proxy
     restart: unless-stopped
     volumes:
-      # Shared volumes for ACME challenges and certificate storage
+      # Volumes for ACME challenges and certificate storage
       - ./certbot/www:/var/www/certbot:rw
       - ./certbot/conf:/etc/letsencrypt:rw
-    # Automatic certificate renewal every 12 hours
-    command: sh -c "while :; do sleep 12h & wait $${!}; certbot renew; done"
     networks:
-      - app-network
+      - frontend-raise-fund_app-network
+    # Keep container running without automatic renewal for now
+    command: sh -c "tail -f /dev/null"
 
-  # Next.js Application Service
 networks:
-  app-network:
-    driver: bridge
+  # Connect to external network where Next.js is running
+  frontend-raise-fund_app-network:
     external: true
-    name: frontend-raise-fund_app-network
-# Note: Volumes are managed through bind mounts for easier certificate management
